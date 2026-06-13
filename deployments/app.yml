@@ -11,6 +11,7 @@ services:
       - "${APP_PORT:-8000}:8000"
     environment:
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
       DEBUG: ${DEBUG:-True}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
