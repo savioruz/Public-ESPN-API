@@ -1,0 +1,51 @@
+services:
+  web:
+    build:
+      context: ../espn_service
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ../espn_service:/app
+    ports:
+      - "${APP_PORT}:8000"
+    env_file:
+      - ../espn_service/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
+      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
+      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
+      DEBUG: ${APP_DEBUG:-True}
+      ALLOWED_HOSTS: ${APP_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+
+  worker:
+    build:
+      context: ../espn_service
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - ../espn_service:/app
+    env_file:
+      - ../espn_service/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
+      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
+      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
+      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+
+  beat:
+    build:
+      context: ../espn_service
+    command: celery -A config beat --loglevel=info
+    volumes:
+      - ../espn_service:/app
+    env_file:
+      - ../espn_service/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
+      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
+      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
+      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
