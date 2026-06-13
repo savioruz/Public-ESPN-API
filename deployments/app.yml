@@ -5,8 +5,6 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - ../espn_service:/app
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
@@ -31,8 +29,6 @@ services:
     build:
       context: ../espn_service
     command: celery -A config worker --loglevel=info
-    volumes:
-      - ../espn_service:/app
     environment:
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
       SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
@@ -46,9 +42,7 @@ services:
   beat:
     build:
       context: ../espn_service
-    command: celery -A config beat --loglevel=info
-    volumes:
-      - ../espn_service:/app
+    command: celery -A config beat --loglevel=info --pidfile= --schedule=/tmp/celerybeat-schedule
     environment:
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
       SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
