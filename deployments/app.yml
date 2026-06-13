@@ -8,15 +8,23 @@ services:
     volumes:
       - ../espn_service:/app
     ports:
-      - "${APP_PORT}:8000"
+      - "${APP_PORT:-8000}:8000"
     environment:
-      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
-      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
-      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
-      DEBUG: ${APP_DEBUG:-True}
-      ALLOWED_HOSTS: ${APP_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
-      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
-      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/espn_db}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://localhost:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://localhost:6379/0}
+      ESPN_TIMEOUT: ${ESPN_TIMEOUT:-30}
+      ESPN_MAX_RETRIES: ${ESPN_MAX_RETRIES:-3}
+      ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
+      ESPN_SITE_API_BASE_URL: ${ESPN_SITE_API_BASE_URL:-https://site.api.espn.com}
+      ESPN_CORE_API_BASE_URL: ${ESPN_CORE_API_BASE_URL:-https://sports.core.api.espn.com}
+      ESPN_WEB_V3_API_BASE_URL: ${ESPN_WEB_V3_API_BASE_URL:-https://site.web.api.espn.com}
+      ESPN_CDN_API_BASE_URL: ${ESPN_CDN_API_BASE_URL:-https://cdn.espn.com}
+      ESPN_NOW_API_BASE_URL: ${ESPN_NOW_API_BASE_URL:-https://now.core.api.espn.com}
 
   worker:
     build:
@@ -25,11 +33,14 @@ services:
     volumes:
       - ../espn_service:/app
     environment:
-      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
-      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
-      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
-      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
-      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/espn_db}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://localhost:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://localhost:6379/0}
+      ESPN_TIMEOUT: ${ESPN_TIMEOUT:-30}
+      ESPN_MAX_RETRIES: ${ESPN_MAX_RETRIES:-3}
+      ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
 
   beat:
     build:
@@ -38,8 +49,11 @@ services:
     volumes:
       - ../espn_service:/app
     environment:
-      DJANGO_SETTINGS_MODULE: ${APP_DJANGO_SETTINGS_MODULE:-config.settings.local}
-      DATABASE_URL: ${APP_DATABASE_URL:-postgres://postgres:postgres@db:5432/espn_db}
-      SECRET_KEY: ${APP_SECRET_KEY:-dev-secret-key-change-in-production}
-      CELERY_BROKER_URL: ${APP_CELERY_BROKER_URL:-redis://redis:6379/0}
-      CELERY_RESULT_BACKEND: ${APP_CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/espn_db}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://localhost:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://localhost:6379/0}
+      ESPN_TIMEOUT: ${ESPN_TIMEOUT:-30}
+      ESPN_MAX_RETRIES: ${ESPN_MAX_RETRIES:-3}
+      ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
