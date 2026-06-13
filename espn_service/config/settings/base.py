@@ -19,6 +19,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, []),
+    API_KEY=(str, None),
 )
 
 # Read .env file if it exists
@@ -26,6 +27,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
+
+API_KEY = env("API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
@@ -63,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "apps.core.middleware.APIKeyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -162,6 +166,16 @@ SPECTACULAR_SETTINGS = {
         {"name": "Ingest", "description": "ESPN data ingestion endpoints"},
         {"name": "Health", "description": "Health check endpoints"},
     ],
+    "SECURITY": [{"ApiKeyAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-Key",
+            },
+        },
+    },
 }
 
 

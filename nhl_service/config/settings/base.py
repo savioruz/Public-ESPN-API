@@ -8,11 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env(
     DEBUG=(bool, False),
+    API_KEY=(str, None),
 )
 
 environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-change-in-production")
+
+API_KEY = env("API_KEY")
 
 DEBUG = env("DJANGO_DEBUG", default=False)
 
@@ -32,6 +35,7 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
     # Local
+    "apps.core",
     "apps.nhl",
     "apps.ingest",
 ]
@@ -40,6 +44,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "apps.core.middleware.APIKeyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -142,6 +147,16 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "CONTACT": {"name": "Joseph Wilson", "email": "jwilson@kloverdevs.ca"},
     "LICENSE": {"name": "MIT"},
+    "SECURITY": [{"ApiKeyAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-Key",
+            },
+        },
+    },
 }
 
 # NHL API client settings

@@ -8,6 +8,7 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
+      API_KEY: ${API_KEY:-strong_api_key}
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
