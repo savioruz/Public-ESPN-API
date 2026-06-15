@@ -239,21 +239,11 @@ CELERY_BEAT_SCHEDULE = {
 # ESPN Client settings
 ESPN_CLIENT = {
     # Domain URLs — override in .env if needed
-    "SITE_API_BASE_URL": env(
-        "ESPN_SITE_API_BASE_URL", default="https://site.api.espn.com"
-    ),
-    "CORE_API_BASE_URL": env(
-        "ESPN_CORE_API_BASE_URL", default="https://sports.core.api.espn.com"
-    ),
-    "WEB_V3_API_BASE_URL": env(
-        "ESPN_WEB_V3_API_BASE_URL", default="https://site.web.api.espn.com"
-    ),
-    "CDN_API_BASE_URL": env(
-        "ESPN_CDN_API_BASE_URL", default="https://cdn.espn.com"
-    ),
-    "NOW_API_BASE_URL": env(
-        "ESPN_NOW_API_BASE_URL", default="https://now.core.api.espn.com"
-    ),
+    "SITE_API_BASE_URL": env("ESPN_SITE_API_BASE_URL", default="https://site.api.espn.com"),
+    "CORE_API_BASE_URL": env("ESPN_CORE_API_BASE_URL", default="https://sports.core.api.espn.com"),
+    "WEB_V3_API_BASE_URL": env("ESPN_WEB_V3_API_BASE_URL", default="https://site.web.api.espn.com"),
+    "CDN_API_BASE_URL": env("ESPN_CDN_API_BASE_URL", default="https://cdn.espn.com"),
+    "NOW_API_BASE_URL": env("ESPN_NOW_API_BASE_URL", default="https://now.core.api.espn.com"),
     # Request behaviour
     "TIMEOUT": env.float("ESPN_TIMEOUT", default=30.0),
     "MAX_RETRIES": env.int("ESPN_MAX_RETRIES", default=3),
@@ -265,6 +255,51 @@ ESPN_CLIENT = {
     "RATE_LIMIT_REQUESTS": env.int("ESPN_RATE_LIMIT_REQUESTS", default=60),
     "RATE_LIMIT_PERIOD": env.int("ESPN_RATE_LIMIT_PERIOD", default=60),
 }
+
+
+# ---------------------------------------------------------------------------
+# Ingest scope — the (sport, league) pairs the periodic refresh_all_* Celery
+# tasks fan out over. Trimmed to the sports the downstream app actually uses
+# (soccer incl. World Cup, football, basketball) to bound DB/connection load.
+# Override without a code change via:
+#   INGEST_LEAGUES="soccer:fifa.world,football:nfl,basketball:nba"
+# ---------------------------------------------------------------------------
+_DEFAULT_INGEST_LEAGUES = [
+    # Soccer (World Cup + major leagues)
+    "soccer:fifa.world",
+    "soccer:eng.1",
+    "soccer:esp.1",
+    "soccer:ger.1",
+    "soccer:ita.1",
+    "soccer:fra.1",
+    "soccer:usa.1",
+    "soccer:eng.2",
+    "soccer:uefa.champions",
+    "soccer:uefa.europa"
+    # Football
+    "football:nfl",
+    # Basketball
+    "basketball:nba",
+    # MMA
+    "mma:ufc",
+    # Racing
+    "racing:f1",
+]
+
+
+def _parse_ingest_leagues(raw: list[str]) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    for item in raw:
+        sport, _, league = item.partition(":")
+        sport, league = sport.strip(), league.strip()
+        if sport and league:
+            pairs.append((sport, league))
+    return pairs
+
+
+INGEST_LEAGUES: list[tuple[str, str]] = _parse_ingest_leagues(
+    env.list("INGEST_LEAGUES", default=_DEFAULT_INGEST_LEAGUES)
+)
 
 
 # Structured logging configuration
