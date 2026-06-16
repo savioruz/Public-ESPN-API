@@ -54,14 +54,29 @@ def refresh_scoreboard_task(self, sport: str, league: str, date: str | None = No
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=120)
 def refresh_all_scoreboards_task(self) -> dict:
-    """Ingest today's scoreboard for every configured league."""
+    """Re-ingest scoreboards for every configured league, for **today and
+    yesterday** (UTC). Yesterday covers ESPN's local/ET date bucketing (a game
+    after ~20:00 ET lands on the previous UTC day) and late finishers, so live
+    games advance to `final` instead of freezing at their last-seen minute.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    dates = [now.strftime("%Y%m%d"), (now - timedelta(days=1)).strftime("%Y%m%d")]
     total = {"created": 0, "updated": 0, "errors": 0}
     for sport, league in ALL_LEAGUES_CONFIG:
-        try:
-            refresh_scoreboard_task.delay(sport, league)
-        except Exception as e:
-            logger.error("refresh_all_scoreboards_dispatch_error", sport=sport, league=league, error=str(e))
-            total["errors"] += 1
+        for date in dates:
+            try:
+                refresh_scoreboard_task.delay(sport, league, date)
+            except Exception as e:
+                logger.error(
+                    "refresh_all_scoreboards_dispatch_error",
+                    sport=sport,
+                    league=league,
+                    date=date,
+                    error=str(e),
+                )
+                total["errors"] += 1
     return total
 
 

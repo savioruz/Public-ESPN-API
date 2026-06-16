@@ -306,6 +306,12 @@ class ESPNClient:
             "USER_AGENT", "ESPN-Service/1.0"
         )
 
+        # Optional Vercel relay (passthrough) to dodge per-IP rate limits. Empty =
+        # direct. When set, each request is sent to this URL with an `x-relay-target`
+        # header carrying the full ESPN URL; the relay fetches it and returns ESPN's
+        # response verbatim.
+        self.vercel_relay = (getattr(settings, "ESPN_VERCEL_RELAY", "") or "").rstrip("/")
+
         self._client: httpx.Client | None = None
 
     @property
@@ -403,6 +409,20 @@ class ESPNClient:
 
         return ESPNResponse(data=data, status_code=response.status_code, url=url)
 
+    def _send(
+        self, method: str, url: str, params: dict[str, Any] | None
+    ) -> httpx.Response:
+        """Direct request, or via the Vercel relay when `ESPN_VERCEL_RELAY` is set.
+
+        The relay is a passthrough: we send to its base URL with the full ESPN URL
+        (query included) in an `x-relay-target` header, and it returns ESPN's
+        response + status verbatim.
+        """
+        if self.vercel_relay:
+            target = str(httpx.URL(url, params=params or {}))
+            return self.client.request(method, self.vercel_relay, headers={"x-relay-target": target})
+        return self.client.request(method, url, params=params)
+
     def _request_with_retry(
         self,
         method: str,
@@ -422,7 +442,7 @@ class ESPNClient:
         )
         def _do_request() -> ESPNResponse:
             logger.debug("espn_request", method=method, url=url, params=params)
-            response = self.client.request(method, url, params=params)
+            response = self._send(method, url, params)
             return self._handle_response(response, url)
 
         try:

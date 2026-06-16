@@ -202,16 +202,12 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 CELERY_BEAT_SCHEDULE = {
-    # Scoreboards — high-frequency during seasons
-    "refresh-nba-scoreboard-hourly": {
-        "task": "apps.ingest.tasks.refresh_scoreboard_task",
-        "schedule": 3600.0,  # Every hour
-        "args": ("basketball", "nba"),
-    },
-    "refresh-nfl-scoreboard-hourly": {
-        "task": "apps.ingest.tasks.refresh_scoreboard_task",
-        "schedule": 3600.0,  # Every hour
-        "args": ("football", "nfl"),
+    # Scoreboards — re-ingest ALL configured leagues every 5 min (today + yesterday
+    # UTC) so live games advance to `final` instead of freezing. Covers nba/nfl too
+    # (they're in ALL_LEAGUES_CONFIG), replacing the old per-league hourly beats.
+    "refresh-all-scoreboards-5min": {
+        "task": "apps.ingest.tasks.refresh_all_scoreboards_task",
+        "schedule": 300.0,  # Every 5 minutes (tunable)
     },
     # Teams — refreshed weekly (rosters/logos change infrequently)
     "refresh-teams-weekly": {
@@ -256,6 +252,10 @@ ESPN_CLIENT = {
     "RATE_LIMIT_PERIOD": env.int("ESPN_RATE_LIMIT_PERIOD", default=60),
 }
 
+# Optional Vercel relay (passthrough) for ESPN requests — dodge per-IP rate limits.
+# Empty = direct. When set, requests go via this URL with an `x-relay-target` header.
+ESPN_VERCEL_RELAY = env("ESPN_VERCEL_RELAY", default="")
+
 
 # ---------------------------------------------------------------------------
 # Ingest scope — the (sport, league) pairs the periodic refresh_all_* Celery
@@ -280,10 +280,6 @@ _DEFAULT_INGEST_LEAGUES = [
     "football:nfl",
     # Basketball
     "basketball:nba",
-    # MMA
-    "mma:ufc",
-    # Racing
-    "racing:f1",
 ]
 
 
