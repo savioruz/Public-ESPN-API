@@ -27,6 +27,11 @@ services:
       ESPN_NOW_API_BASE_URL: ${ESPN_NOW_API_BASE_URL:-https://now.core.api.espn.com}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      APP_NAME: ${APP_NAME:-espn}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      OTEL_PROTOCOL: ${OTEL_PROTOCOL:-grpc}
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-}
 
   worker:
     build:
@@ -43,6 +48,11 @@ services:
       ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      APP_NAME: ${APP_NAME:-espn}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      OTEL_PROTOCOL: ${OTEL_PROTOCOL:-grpc}
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-}
 
   beat:
     build:
@@ -59,3 +69,8 @@ services:
       ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      APP_NAME: ${APP_NAME:-espn}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      OTEL_PROTOCOL: ${OTEL_PROTOCOL:-grpc}
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-}

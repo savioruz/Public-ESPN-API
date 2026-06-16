@@ -18,6 +18,11 @@ services:
       - SENTRY_DSN=${SENTRY_DSN:-}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       - redis
     restart: unless-stopped
@@ -51,6 +56,11 @@ services:
       - SENTRY_DSN=${SENTRY_DSN:-}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       - redis
     restart: unless-stopped
@@ -73,6 +83,11 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       - redis
       - celery
