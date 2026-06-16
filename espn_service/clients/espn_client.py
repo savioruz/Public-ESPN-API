@@ -412,15 +412,31 @@ class ESPNClient:
     def _send(
         self, method: str, url: str, params: dict[str, Any] | None
     ) -> httpx.Response:
-        """Direct request, or via the Vercel relay when `ESPN_VERCEL_RELAY` is set.
+        """Send via the Vercel relay first (to dodge per-IP rate limits), falling
+        back to a direct request.
 
-        The relay is a passthrough: we send to its base URL with the full ESPN URL
-        (query included) in an `x-relay-target` header, and it returns ESPN's
-        response + status verbatim.
+        When `ESPN_VERCEL_RELAY` is set, we send to its base URL with the full ESPN
+        URL (query included) in an `x-relay-target` header. If the relay returns 2xx
+        we use it; if it returns non-2xx or errors, we fall back to a direct request
+        so a broken/unavailable relay never breaks ingestion. When the var is empty,
+        we go direct.
         """
         if self.vercel_relay:
-            target = str(httpx.URL(url, params=params or {}))
-            return self.client.request(method, self.vercel_relay, headers={"x-relay-target": target})
+            try:
+                target = str(httpx.URL(url, params=params or {}))
+                relayed = self.client.request(
+                    method, self.vercel_relay, headers={"x-relay-target": target}
+                )
+                if 200 <= relayed.status_code < 300:
+                    return relayed
+                logger.warning(
+                    "espn_relay_non_2xx_fallback_direct",
+                    url=url,
+                    relay_status=relayed.status_code,
+                )
+            except httpx.HTTPError as exc:
+                logger.warning("espn_relay_error_fallback_direct", url=url, error=str(exc))
+
         return self.client.request(method, url, params=params)
 
     def _request_with_retry(
