@@ -15,6 +15,7 @@ from django.db import transaction
 from apps.core.exceptions import IngestionError
 from apps.espn.models import Competitor, Event, League, Sport, Team, Venue
 from clients.espn_client import ESPNClient, get_espn_client
+from config.otel import set_attrs, traced
 
 logger = structlog.get_logger(__name__)
 
@@ -94,6 +95,7 @@ class TeamIngestionService:
         }
 
     @transaction.atomic
+    @traced(layer="service")
     def ingest_teams(self, sport: str, league: str) -> IngestionResult:
         """Ingest all teams for a sport and league."""
         result = IngestionResult(details=[])
@@ -287,6 +289,7 @@ class ScoreboardIngestionService:
 
         return count
 
+    @traced(layer="service")
     @transaction.atomic
     def ingest_scoreboard(
         self,
@@ -296,12 +299,14 @@ class ScoreboardIngestionService:
     ) -> IngestionResult:
         """Ingest scoreboard data for a sport, league, and date."""
         result = IngestionResult(details=[])
+        set_attrs(sport=sport, league=league, date=date)
 
         try:
             _, league_obj = get_or_create_sport_and_league(sport, league)
 
             response = self.client.get_scoreboard(sport, league, date)
             events_data = response.data.get("events", [])
+            set_attrs(events_found=len(events_data))
 
             if not events_data:
                 logger.info("no_events_found", sport=sport, league=league, date=date)
@@ -338,6 +343,7 @@ class ScoreboardIngestionService:
                     logger.error("event_ingestion_error", event_id=event_data.get("id"), error=str(e))
                     result.errors += 1
 
+            set_attrs(created=result.created, updated=result.updated, errors=result.errors)
             logger.info(
                 "scoreboard_ingested",
                 sport=sport,
@@ -393,6 +399,7 @@ class NewsIngestionService:
         }
 
     @transaction.atomic
+    @traced(layer="service")
     def ingest_news(self, sport: str, league: str, limit: int = 50) -> IngestionResult:
         """Ingest news articles for a sport/league."""
         from apps.espn.models import NewsArticle
@@ -486,6 +493,7 @@ class InjuryIngestionService:
         }
 
     @transaction.atomic
+    @traced(layer="service")
     def ingest_injuries(self, sport: str, league: str) -> IngestionResult:
         """Clear and re-ingest all league injuries (snapshot refresh)."""
         from apps.espn.models import Injury
@@ -576,6 +584,7 @@ class TransactionIngestionService:
         }
 
     @transaction.atomic
+    @traced(layer="service")
     def ingest_transactions(self, sport: str, league: str) -> IngestionResult:
         """Ingest recent transactions for a sport/league."""
         from apps.espn.models import Transaction
@@ -648,6 +657,7 @@ class AthleteStatsIngestionService:
     def __init__(self, client: ESPNClient | None = None):
         self.client = client or get_espn_client()
 
+    @traced(layer="service")
     @transaction.atomic
     def ingest_athlete_stats(
         self,
