@@ -15,8 +15,8 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-production
       - DEBUG=True
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       db:
         condition: service_healthy
@@ -66,8 +66,8 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - SECRET_KEY=dev-secret-key-change-in-production
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       db:
         condition: service_healthy
@@ -87,8 +87,8 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - SECRET_KEY=dev-secret-key-change-in-production
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       db:
         condition: service_healthy
