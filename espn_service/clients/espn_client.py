@@ -5,6 +5,7 @@ All ESPN API calls should go through this client to ensure consistent
 error handling, retries, and rate limiting.
 """
 
+import itertools
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -28,6 +29,11 @@ from apps.core.exceptions import (
 )
 
 logger = structlog.get_logger(__name__)
+
+# Process-wide round-robin cursor for the relay pool. `next()` on an itertools
+# counter is atomic under CPython's GIL, so this distributes the starting relay
+# across requests without a lock, and survives per-request client instances.
+_RELAY_RR = itertools.count()
 
 
 class ESPNEndpointDomain(str, Enum):
@@ -306,11 +312,15 @@ class ESPNClient:
             "USER_AGENT", "ESPN-Service/1.0"
         )
 
-        # Optional Vercel relay (passthrough) to dodge per-IP rate limits. Empty =
-        # direct. When set, each request is sent to this URL with an `x-relay-target`
-        # header carrying the full ESPN URL; the relay fetches it and returns ESPN's
-        # response verbatim.
-        self.vercel_relay = (getattr(settings, "ESPN_VERCEL_RELAY", "") or "").rstrip("/")
+        # Optional Vercel relay pool (passthrough) to dodge per-IP rate limits.
+        # `ESPN_VERCEL_RELAY` is a comma-separated list of relay base URLs (one is
+        # fine); empty = direct. Requests round-robin across the pool, and any relay
+        # that errors or returns non-2xx is skipped to the next one — falling back to
+        # a direct request only if every relay fails. See `_send`.
+        raw_relays = (getattr(settings, "ESPN_VERCEL_RELAY", "") or "")
+        self.vercel_relays = [
+            r.rstrip("/") for r in (part.strip() for part in raw_relays.split(",")) if r
+        ]
 
         self._client: httpx.Client | None = None
 
@@ -412,36 +422,44 @@ class ESPNClient:
     def _send(
         self, method: str, url: str, params: dict[str, Any] | None
     ) -> httpx.Response:
-        """Send via the Vercel relay first (to dodge per-IP rate limits), falling
-        back to a direct request.
+        """Send via the Vercel relay pool first (to dodge per-IP rate limits),
+        falling back to a direct request.
 
-        When `ESPN_VERCEL_RELAY` is set, we send to its base URL and let it rebuild
-        the upstream URL as `x-relay-target` (origin) + `x-relay-path` (path+query) —
-        the contract the relay expects. (Cramming the full URL into `x-relay-target`
-        alone makes the relay append its default "/" and corrupt the query.) If the
-        relay returns 2xx we use it; if it returns non-2xx or errors, we fall back to
-        a direct request so a broken/unavailable relay never breaks ingestion. When
-        the var is empty, we go direct.
+        When `ESPN_VERCEL_RELAY` holds one or more comma-separated relay URLs, the
+        request round-robins across the pool: we start at a rotating offset and try
+        each relay in turn. We send to the relay's base URL and let it rebuild the
+        upstream as `x-relay-target` (origin) + `x-relay-path` (path+query) — the
+        contract the relay expects. (Cramming the full URL into `x-relay-target`
+        alone makes the relay append its default "/" and corrupt the query.) The
+        first relay that returns 2xx wins; a relay that errors or returns non-2xx
+        (e.g. rate-limited) is skipped to the next one. Only if *every* relay fails
+        do we fall back to a direct request, so the pool never breaks ingestion.
+        When the var is empty, we go direct.
         """
-        if self.vercel_relay:
-            try:
-                full = httpx.URL(url, params=params or {})
-                origin = f"{full.scheme}://{full.netloc.decode()}"
-                path_q = full.raw_path.decode()
-                relayed = self.client.request(
-                    method,
-                    self.vercel_relay,
-                    headers={"x-relay-target": origin, "x-relay-path": path_q},
-                )
-                if 200 <= relayed.status_code < 300:
-                    return relayed
-                logger.warning(
-                    "espn_relay_non_2xx_fallback_direct",
-                    url=url,
-                    relay_status=relayed.status_code,
-                )
-            except httpx.HTTPError as exc:
-                logger.warning("espn_relay_error_fallback_direct", url=url, error=str(exc))
+        relays = self.vercel_relays
+        if relays:
+            full = httpx.URL(url, params=params or {})
+            relay_headers = {
+                "x-relay-target": f"{full.scheme}://{full.netloc.decode()}",
+                "x-relay-path": full.raw_path.decode(),
+            }
+            n = len(relays)
+            start = next(_RELAY_RR) % n
+            for i in range(n):
+                relay = relays[(start + i) % n]
+                try:
+                    relayed = self.client.request(method, relay, headers=relay_headers)
+                    if 200 <= relayed.status_code < 300:
+                        return relayed
+                    logger.warning(
+                        "espn_relay_non_2xx",
+                        url=url,
+                        relay=relay,
+                        relay_status=relayed.status_code,
+                    )
+                except httpx.HTTPError as exc:
+                    logger.warning("espn_relay_error", url=url, relay=relay, error=str(exc))
+            logger.warning("espn_relay_pool_exhausted_fallback_direct", url=url, relays=n)
 
         return self.client.request(method, url, params=params)
 
