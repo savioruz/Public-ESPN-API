@@ -284,7 +284,7 @@ _DEFAULT_INGEST_LEAGUES = [
     "soccer:usa.1",
     "soccer:eng.2",
     "soccer:uefa.champions",
-    "soccer:uefa.europa"
+    "soccer:uefa.europa",
     # Football
     "football:nfl",
     # Basketball
