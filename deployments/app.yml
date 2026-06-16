@@ -25,8 +25,8 @@ services:
       ESPN_WEB_V3_API_BASE_URL: ${ESPN_WEB_V3_API_BASE_URL:-https://site.web.api.espn.com}
       ESPN_CDN_API_BASE_URL: ${ESPN_CDN_API_BASE_URL:-https://cdn.espn.com}
       ESPN_NOW_API_BASE_URL: ${ESPN_NOW_API_BASE_URL:-https://now.core.api.espn.com}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      ESPN_VERCEL_RELAY: ${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}
 
   worker:
     build:
@@ -41,8 +41,8 @@ services:
       ESPN_TIMEOUT: ${ESPN_TIMEOUT:-30}
       ESPN_MAX_RETRIES: ${ESPN_MAX_RETRIES:-3}
       ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      ESPN_VERCEL_RELAY: ${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}
 
   beat:
     build:
@@ -57,5 +57,5 @@ services:
       ESPN_TIMEOUT: ${ESPN_TIMEOUT:-30}
       ESPN_MAX_RETRIES: ${ESPN_MAX_RETRIES:-3}
       ESPN_USER_AGENT: ${ESPN_USER_AGENT:-ESPN-Service/1.0}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      ESPN_VERCEL_RELAY: ${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      ESPN_VERCEL_RELAYS: ${ESPN_VERCEL_RELAYS:-}

@@ -259,9 +259,11 @@ ESPN_CLIENT = {
     "RATE_LIMIT_PERIOD": env.int("ESPN_RATE_LIMIT_PERIOD", default=60),
 }
 
-# Optional Vercel relay (passthrough) for ESPN requests — dodge per-IP rate limits.
-# Empty = direct. When set, requests go via this URL with an `x-relay-target` header.
-ESPN_VERCEL_RELAY = env("ESPN_VERCEL_RELAY", default="")
+# Optional Vercel relay pool (passthrough) for ESPN requests — dodge per-IP rate
+# limits. Empty = direct. Comma-separate one or more relay base URLs; requests
+# round-robin across them with failover. (Falls back to the old singular
+# ESPN_VERCEL_RELAY name if the plural isn't set.)
+ESPN_VERCEL_RELAYS = env("ESPN_VERCEL_RELAYS", default=env("ESPN_VERCEL_RELAY", default=""))
 
 
 # ---------------------------------------------------------------------------

@@ -313,11 +313,11 @@ class ESPNClient:
         )
 
         # Optional Vercel relay pool (passthrough) to dodge per-IP rate limits.
-        # `ESPN_VERCEL_RELAY` is a comma-separated list of relay base URLs (one is
+        # `ESPN_VERCEL_RELAYS` is a comma-separated list of relay base URLs (one is
         # fine); empty = direct. Requests round-robin across the pool, and any relay
         # that errors or returns non-2xx is skipped to the next one — falling back to
         # a direct request only if every relay fails. See `_send`.
-        raw_relays = (getattr(settings, "ESPN_VERCEL_RELAY", "") or "")
+        raw_relays = (getattr(settings, "ESPN_VERCEL_RELAYS", "") or "")
         self.vercel_relays = [
             r.rstrip("/") for r in (part.strip() for part in raw_relays.split(",")) if r
         ]
@@ -425,7 +425,7 @@ class ESPNClient:
         """Send via the Vercel relay pool first (to dodge per-IP rate limits),
         falling back to a direct request.
 
-        When `ESPN_VERCEL_RELAY` holds one or more comma-separated relay URLs, the
+        When `ESPN_VERCEL_RELAYS` holds one or more comma-separated relay URLs, the
         request round-robins across the pool: we start at a rotating offset and try
         each relay in turn. We send to the relay's base URL and let it rebuild the
         upstream as `x-relay-target` (origin) + `x-relay-path` (path+query) — the

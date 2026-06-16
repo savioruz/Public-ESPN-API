@@ -16,8 +16,8 @@ services:
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-}
       - SENTRY_DSN=${SENTRY_DSN:-}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       - redis
     restart: unless-stopped
@@ -49,8 +49,8 @@ services:
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - SECRET_KEY=${SECRET_KEY}
       - SENTRY_DSN=${SENTRY_DSN:-}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       - redis
     restart: unless-stopped
@@ -71,8 +71,8 @@ services:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - SECRET_KEY=${SECRET_KEY}
-      # Optional Vercel relay (empty = direct). Set to route ESPN calls via the relay.
-      - ESPN_VERCEL_RELAY=${ESPN_VERCEL_RELAY:-}
+      # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
+      - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
     depends_on:
       - redis
       - celery
