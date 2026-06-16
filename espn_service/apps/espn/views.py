@@ -31,6 +31,7 @@ from apps.espn.serializers import (
     TeamSerializer,
     TransactionSerializer,
 )
+from config.otel import traced
 
 
 class SportViewSet(viewsets.ReadOnlyModelViewSet):
@@ -43,10 +44,12 @@ class SportViewSet(viewsets.ReadOnlyModelViewSet):
         return Sport.objects.prefetch_related("leagues").order_by("name")
 
     @extend_schema(tags=["Discovery"], summary="List sports")
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Discovery"], summary="Get sport details")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -68,10 +71,12 @@ class LeagueViewSet(viewsets.ReadOnlyModelViewSet):
         summary="List leagues",
         parameters=[OpenApiParameter("sport", description="Filter by sport slug", type=str)],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Discovery"], summary="Get league details")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -101,10 +106,12 @@ class TeamViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("search", description="Search in name/abbreviation/location", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Teams"], summary="Get team details")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -152,10 +159,12 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("team", description="Filter by team ESPN ID or abbreviation", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Events"], summary="Get event details")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -216,10 +225,12 @@ class NewsArticleViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("search", description="Search headline/description", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["News"], summary="Get news article detail")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -268,10 +279,12 @@ class InjuryViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("search", description="Search athlete name / injury type", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Injuries"], summary="Get injury detail")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -311,10 +324,12 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("search", description="Search description / athlete name / type", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Transactions"], summary="Get transaction detail")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)
 
@@ -359,9 +374,11 @@ class AthleteSeasonStatsViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter("search", description="Search athlete name", type=str),
         ],
     )
+    @traced(layer="handler")
     def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
     @extend_schema(tags=["Athlete Stats"], summary="Get athlete season stats detail")
+    @traced(layer="handler")
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         return super().retrieve(request, *args, **kwargs)

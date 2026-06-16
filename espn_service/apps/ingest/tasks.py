@@ -10,6 +10,8 @@ import structlog
 from celery import shared_task
 from django.conf import settings
 
+from config.otel import detached_context
+
 logger = structlog.get_logger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -67,7 +69,8 @@ def refresh_all_scoreboards_task(self) -> dict:
     for sport, league in ALL_LEAGUES_CONFIG:
         for date in dates:
             try:
-                refresh_scoreboard_task.delay(sport, league, date)
+                with detached_context():
+                    refresh_scoreboard_task.delay(sport, league, date)
             except Exception as e:
                 logger.error(
                     "refresh_all_scoreboards_dispatch_error",
@@ -120,7 +123,8 @@ def unstick_scoreboards_task(self, lookback_days: int = 7, max_events: int = 200
     total = {"stuck_events": len(stuck), "dispatched": 0, "errors": 0}
     for sport, league, date in buckets:
         try:
-            refresh_scoreboard_task.delay(sport, league, date)
+            with detached_context():
+                refresh_scoreboard_task.delay(sport, league, date)
             total["dispatched"] += 1
         except Exception as e:
             logger.error(
@@ -161,7 +165,8 @@ def refresh_all_teams_task(self) -> dict:
     total = {"created": 0, "updated": 0, "errors": 0}
     for sport, league in ALL_LEAGUES_CONFIG:
         try:
-            refresh_teams_task.delay(sport, league)
+            with detached_context():
+                refresh_teams_task.delay(sport, league)
         except Exception as e:
             logger.error("refresh_all_teams_dispatch_error", sport=sport, league=league, error=str(e))
             total["errors"] += 1
@@ -200,7 +205,8 @@ def refresh_all_news_task(self) -> dict:
     total = {"created": 0, "updated": 0, "errors": 0}
     for sport, league in ALL_LEAGUES_CONFIG:
         try:
-            refresh_news_task.delay(sport, league)
+            with detached_context():
+                refresh_news_task.delay(sport, league)
         except Exception as e:
             logger.error("refresh_all_news_dispatch_error", sport=sport, league=league, error=str(e))
             total["errors"] += 1
@@ -238,7 +244,8 @@ def refresh_all_injuries_task(self) -> dict:
     total = {"created": 0, "errors": 0}
     for sport, league in ALL_LEAGUES_CONFIG:
         try:
-            refresh_injuries_task.delay(sport, league)
+            with detached_context():
+                refresh_injuries_task.delay(sport, league)
         except Exception as e:
             logger.error("refresh_all_injuries_dispatch_error", sport=sport, league=league, error=str(e))
             total["errors"] += 1
@@ -277,7 +284,8 @@ def refresh_all_transactions_task(self) -> dict:
     total = {"created": 0, "updated": 0, "errors": 0}
     for sport, league in ALL_LEAGUES_CONFIG:
         try:
-            refresh_transactions_task.delay(sport, league)
+            with detached_context():
+                refresh_transactions_task.delay(sport, league)
         except Exception as e:
             logger.error(
                 "refresh_all_transactions_dispatch_error",

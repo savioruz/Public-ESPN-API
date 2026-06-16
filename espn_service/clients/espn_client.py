@@ -27,6 +27,7 @@ from apps.core.exceptions import (
     ESPNNotFoundError,
     ESPNRateLimitError,
 )
+from config.otel import traced
 
 logger = structlog.get_logger(__name__)
 
@@ -524,6 +525,7 @@ class ESPNClient:
 
     # --------------------- Scoreboard Endpoints ---------------------
 
+    @traced(layer="client")
     def get_scoreboard(
         self,
         sport: str,
@@ -563,6 +565,7 @@ class ESPNClient:
 
     # --------------------- Team Endpoints ---------------------
 
+    @traced(layer="client")
     def get_teams(
         self,
         sport: str,
@@ -633,6 +636,7 @@ class ESPNClient:
 
     # --------------------- Event/Game Endpoints ---------------------
 
+    @traced(layer="client")
     def get_event(
         self,
         sport: str,
@@ -660,6 +664,7 @@ class ESPNClient:
         )
         return self.get(path, domain=ESPNEndpointDomain.SITE, params=params)
 
+    @traced(layer="client")
     def get_news(
         self,
         sport: str,
@@ -681,6 +686,7 @@ class ESPNClient:
         logger.info("fetching_news", sport=sport, league=league)
         return self.get(path, domain=ESPNEndpointDomain.SITE, params=params)
 
+    @traced(layer="client")
     def get_standings(
         self,
         sport: str,

@@ -22,6 +22,7 @@ from apps.ingest.services import (
     TeamIngestionService,
     TransactionIngestionService,
 )
+from config.otel import traced
 
 logger = structlog.get_logger(__name__)
 
@@ -43,6 +44,7 @@ class IngestScoreboardView(APIView):
             502: {"description": "ESPN API error"},
         },
     )
+    @traced(layer="handler")
     def post(self, request: Request) -> Response:
         """Ingest scoreboard data from ESPN."""
         serializer = IngestScoreboardRequestSerializer(data=request.data)
@@ -76,6 +78,7 @@ class IngestTeamsView(APIView):
             502: {"description": "ESPN API error"},
         },
     )
+    @traced(layer="handler")
     def post(self, request: Request) -> Response:
         """Ingest teams data from ESPN."""
         serializer = IngestTeamsRequestSerializer(data=request.data)
@@ -108,6 +111,7 @@ class IngestNewsView(APIView):
             502: {"description": "ESPN API error"},
         },
     )
+    @traced(layer="handler")
     def post(self, request: Request) -> Response:
         """Ingest news articles from ESPN."""
         serializer = IngestNewsRequestSerializer(data=request.data)
@@ -141,6 +145,7 @@ class IngestInjuriesView(APIView):
             502: {"description": "ESPN API error"},
         },
     )
+    @traced(layer="handler")
     def post(self, request: Request) -> Response:
         """Ingest injury report from ESPN."""
         serializer = IngestInjuriesRequestSerializer(data=request.data)
@@ -173,6 +178,7 @@ class IngestTransactionsView(APIView):
             502: {"description": "ESPN API error"},
         },
     )
+    @traced(layer="handler")
     def post(self, request: Request) -> Response:
         """Ingest transactions from ESPN."""
         serializer = IngestTransactionsRequestSerializer(data=request.data)
