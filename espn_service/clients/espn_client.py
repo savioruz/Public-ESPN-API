@@ -415,17 +415,23 @@ class ESPNClient:
         """Send via the Vercel relay first (to dodge per-IP rate limits), falling
         back to a direct request.
 
-        When `ESPN_VERCEL_RELAY` is set, we send to its base URL with the full ESPN
-        URL (query included) in an `x-relay-target` header. If the relay returns 2xx
-        we use it; if it returns non-2xx or errors, we fall back to a direct request
-        so a broken/unavailable relay never breaks ingestion. When the var is empty,
-        we go direct.
+        When `ESPN_VERCEL_RELAY` is set, we send to its base URL and let it rebuild
+        the upstream URL as `x-relay-target` (origin) + `x-relay-path` (path+query) —
+        the contract the relay expects. (Cramming the full URL into `x-relay-target`
+        alone makes the relay append its default "/" and corrupt the query.) If the
+        relay returns 2xx we use it; if it returns non-2xx or errors, we fall back to
+        a direct request so a broken/unavailable relay never breaks ingestion. When
+        the var is empty, we go direct.
         """
         if self.vercel_relay:
             try:
-                target = str(httpx.URL(url, params=params or {}))
+                full = httpx.URL(url, params=params or {})
+                origin = f"{full.scheme}://{full.netloc.decode()}"
+                path_q = full.raw_path.decode()
                 relayed = self.client.request(
-                    method, self.vercel_relay, headers={"x-relay-target": target}
+                    method,
+                    self.vercel_relay,
+                    headers={"x-relay-target": origin, "x-relay-path": path_q},
                 )
                 if 200 <= relayed.status_code < 300:
                     return relayed
