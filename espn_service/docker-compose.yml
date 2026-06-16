@@ -17,6 +17,11 @@ services:
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       db:
         condition: service_healthy
@@ -68,6 +73,11 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-production
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       db:
         condition: service_healthy
@@ -89,6 +99,11 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-production
       # Optional Vercel relay pool (comma-separated URLs, empty = direct). Round-robins with failover.
       - ESPN_VERCEL_RELAYS=${ESPN_VERCEL_RELAYS:-}
+      # OpenTelemetry (traces). Enabled only when OTEL_ENDPOINT is set; service name = APP_NAME_<type>_ENVIRONMENT.
+      - APP_NAME=${APP_NAME:-espn}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OTEL_PROTOCOL=${OTEL_PROTOCOL:-grpc}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
     depends_on:
       db:
         condition: service_healthy

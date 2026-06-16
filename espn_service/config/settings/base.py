@@ -267,6 +267,17 @@ ESPN_VERCEL_RELAYS = env("ESPN_VERCEL_RELAYS", default=env("ESPN_VERCEL_RELAY", 
 
 
 # ---------------------------------------------------------------------------
+# OpenTelemetry tracing. Enabled iff OTEL_ENDPOINT is non-empty (no enable flag).
+# The exported service name is f"{APP_NAME}_{type}_{ENVIRONMENT}" where type is
+# web/worker/beat (supplied per process). See config/otel.py.
+# ---------------------------------------------------------------------------
+APP_NAME = env("APP_NAME", default="espn")
+ENVIRONMENT = env("ENVIRONMENT", default="development")
+OTEL_PROTOCOL = env("OTEL_PROTOCOL", default="grpc")
+OTEL_ENDPOINT = env("OTEL_ENDPOINT", default="")
+
+
+# ---------------------------------------------------------------------------
 # Ingest scope — the (sport, league) pairs the periodic refresh_all_* Celery
 # tasks fan out over. Trimmed to the sports the downstream app actually uses
 # (soccer incl. World Cup, football, basketball) to bound DB/connection load.

@@ -3,6 +3,7 @@
 import os
 
 from celery import Celery
+from celery.signals import beat_init, worker_process_init
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
@@ -12,6 +13,23 @@ app = Celery("espn_service")
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 app.config_from_object("django.conf:settings", namespace="CELERY")
+
+
+# Initialise OpenTelemetry *after* prefork — a TracerProvider built in the parent
+# does not survive fork(). worker_process_init fires in each forked worker child;
+# beat_init fires in the (single) beat process. No-op unless OTEL_ENDPOINT is set.
+@worker_process_init.connect(weak=False)
+def _otel_worker_init(**_kwargs) -> None:
+    from config.otel import configure_otel
+
+    configure_otel("worker")
+
+
+@beat_init.connect(weak=False)
+def _otel_beat_init(**_kwargs) -> None:
+    from config.otel import configure_otel
+
+    configure_otel("beat")
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
