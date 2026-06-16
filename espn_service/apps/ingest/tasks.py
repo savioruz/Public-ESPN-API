@@ -80,6 +80,61 @@ def refresh_all_scoreboards_task(self) -> dict:
     return total
 
 
+@shared_task(bind=True, max_retries=2, default_retry_delay=120)
+def unstick_scoreboards_task(self, lookback_days: int = 7, max_events: int = 200) -> dict:
+    """Re-ingest scoreboards for games that are past kickoff yet still showing
+    `scheduled`/`in_progress` — i.e. frozen because their ESPN date bucket falls
+    outside the rolling today+yesterday refresh window.
+
+    For each such event we re-ingest its scoreboard for **both** its UTC date and
+    the day before (ESPN buckets by local/ET date, so a 02:00 UTC kickoff lives
+    under the previous day's scoreboard). `update_or_create` then flips finished
+    games to `final`. Targets only the handful of genuinely-stuck events, so the
+    fan-out stays small regardless of how far back the freeze goes.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from apps.espn.models import Event
+
+    now = datetime.now(timezone.utc)
+    floor = now - timedelta(days=lookback_days)
+    stuck = (
+        Event.objects.filter(
+            status__in=[Event.STATUS_SCHEDULED, Event.STATUS_IN_PROGRESS],
+            date__lt=now,
+            date__gte=floor,
+        )
+        .select_related("league", "league__sport")
+        .order_by("date")[:max_events]
+    )
+
+    # Dedupe to a set of (sport, league, date) buckets so multiple stuck games in
+    # the same league/day enqueue a single re-ingest.
+    buckets: set[tuple[str, str, str]] = set()
+    for event in stuck:
+        sport = event.league.sport.slug
+        league = event.league.slug
+        for d in (event.date, event.date - timedelta(days=1)):
+            buckets.add((sport, league, d.strftime("%Y%m%d")))
+
+    total = {"stuck_events": len(stuck), "dispatched": 0, "errors": 0}
+    for sport, league, date in buckets:
+        try:
+            refresh_scoreboard_task.delay(sport, league, date)
+            total["dispatched"] += 1
+        except Exception as e:
+            logger.error(
+                "unstick_scoreboards_dispatch_error",
+                sport=sport,
+                league=league,
+                date=date,
+                error=str(e),
+            )
+            total["errors"] += 1
+    logger.info("unstick_scoreboards_completed", **total)
+    return total
+
+
 # ---------------------------------------------------------------------------
 # Team tasks
 # ---------------------------------------------------------------------------

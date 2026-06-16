@@ -209,6 +209,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.ingest.tasks.refresh_all_scoreboards_task",
         "schedule": 300.0,  # Every 5 minutes (tunable)
     },
+    # Unstick — re-ingest only games past kickoff still stuck scheduled/in_progress
+    # (their ESPN date bucket fell outside the 5-min today+yesterday window), every
+    # 10 min, re-fetching each event's date AND date-1 to self-heal ET bucketing.
+    "unstick-scoreboards-10min": {
+        "task": "apps.ingest.tasks.unstick_scoreboards_task",
+        "schedule": 600.0,  # Every 10 minutes
+    },
     # Teams — refreshed weekly (rosters/logos change infrequently)
     "refresh-teams-weekly": {
         "task": "apps.ingest.tasks.refresh_all_teams_task",
